@@ -1,6 +1,10 @@
+require("dotenv").config();
+
 const express = require("express");
 const morgan = require("morgan");
 const cors = require("cors");
+
+const Person = require("./models/person");
 
 // Setup morgan tokens
 morgan.token("body", (req) => JSON.stringify(req.body));
@@ -56,7 +60,9 @@ app.get("/", (req, res) => {
  * Returns all the persons in JSON format
  */
 app.get("/api/persons", (req, res) => {
-  res.json(persons);
+  Person.find({}).then((notes) => {
+    res.json(notes);
+  });
 });
 
 /**
@@ -64,13 +70,9 @@ app.get("/api/persons", (req, res) => {
  * Returns the person with the specified id
  */
 app.get("/api/persons/:id", (req, res) => {
-  const id = Number(req.params.id);
-  const person = persons.find((p) => p.id === id);
-  if (person) {
-    res.json(person);
-  } else {
-    res.status(404).end();
-  }
+  Person.findById(req.params.id).then((note) => {
+    response.json(note);
+  });
 });
 
 /**
@@ -115,6 +117,15 @@ app.post("/api/persons", (req, res) => {
 });
 
 /**
+ * Catch any request that did not find a valid route
+ */
+const unknownEndpoint = (request, response) => {
+  response.status(404).send({ error: "unknown endpoint" });
+};
+
+app.use(unknownEndpoint);
+
+/**
  * Finds if a person with an equal name value
  * already exists in the list
  *
@@ -132,7 +143,7 @@ const generateId = () => {
 };
 
 // Port to listen on
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 
 /**
  * Start the server on the specified port
