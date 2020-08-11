@@ -25,3 +25,19 @@ Run the server locally on `process.env.PORT` or `3001`.
 ### `npm run dev`
 
 Run the server in development mode. The app will reload after any edit on `index.js`.
+
+### `build:ui`
+
+Generate a production build of the React frontend and copies it to the `build` directory.
+
+### `deploy`
+
+Deploys the application by pushing the master branch to Heroku.
+
+### `deploy:full`
+
+Same as `deploy`, but builds the frontend before deploying.
+
+### `logs:prod`
+
+Displays the Heroku logs
