@@ -11,6 +11,7 @@ const app = express();
 // Load middlewares
 app.use(express.json());
 app.use(cors());
+app.use(express.static("build"));
 app.use(
   morgan(":method :url :status :res[content-length] - :response-time ms :body")
 );
@@ -131,7 +132,7 @@ const generateId = () => {
 };
 
 // Port to listen on
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT || 3001;
 
 /**
  * Start the server on the specified port
