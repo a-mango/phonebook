@@ -131,7 +131,7 @@ const generateId = () => {
 };
 
 // Port to listen on
-const PORT = 3001;
+const PORT = process.env.PORT || 3001
 
 /**
  * Start the server on the specified port
