@@ -21,15 +21,18 @@ app.use(
 );
 
 /**
- * Home route
+ * Info route
  */
-app.get("/", (request, response) => {
-  const html = `
-    <p>Phonebook has information for ${persons.length} people</p>
+app.get("/info", (request, response) => {
+  Person.find().count({}, (err, count) => {
+    console.log(count);
+    const html = `
+    <p>Phonebook has information for ${count} people</p>
     <p>${new Date()}</p>
   `;
 
-  response.send(html);
+    response.send(html);
+  }).catch((error) => next(error));
 });
 
 /**
