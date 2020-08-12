@@ -11,7 +11,8 @@ mongoose
     console.log("Database error:", error.message);
   });
 
-  
+mongoose.set('useFindAndModify', false)
+
 const personSchema = new mongoose.Schema({
   name: String,
   number: String,
