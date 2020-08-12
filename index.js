@@ -79,41 +79,39 @@ app.get("/api/persons/:id", (req, res) => {
  * API delete route
  * Deletes the persons with the specified id
  */
-app.delete("/api/persons/:id", (req, res) => {
-  const id = Number(req.params.id);
-  persons = persons.filter((person) => person.id !== id);
-
-  // Send 204 no content response
-  res.status(204).end();
+app.delete("/api/persons/:id", (req, res, next) => {
+  Person.findByIdAndRemove(req.params.id)
+    .then((result) => {
+      res.status(204).end();
+    })
+    .catch((error) => next(error));
 });
 
 app.post("/api/persons", (req, res) => {
   const body = req.body;
 
   // If request body is not valid, return 400 error
-  if (!body.name || !body.number) {
+  if (body.name === undefined) {
     return res.status(400).json({
-      error: "content missing",
+      error: "name missing",
     });
-  } else if (nameExists(body.name)) {
+  } else if (body.number === undefined) {
     return res.status(400).json({
-      error: "name must be unique",
+      error: "number missing",
     });
   }
 
   // Create a new person object
-  const person = {
+  const person = new Person({
     name: body.name,
     number: body.number,
     date: new Date(),
-    id: generateId(),
-  };
+  });
 
-  // Add new person to persons
-  persons = persons.concat(person);
-
-  // Respond with newly created person
-  res.json(person);
+  // Save the person to the database
+  person.save().then((savedPerson) => {
+    res.json(savedPerson);
+  });
 });
 
 /**
