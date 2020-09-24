@@ -51,7 +51,7 @@ app.get("/info", (request, response, next) => {
  */
 app.get("/api/persons", (request, response, next) => {
   Person.find({})
-    .then((persons) => persons.map((person) => person.toJSON))
+    .then((persons) => persons.map((person) => person.toJSON()))
     .then((formattedPersons) => {
       response.json(formattedPersons);
     })
@@ -126,7 +126,7 @@ app.put("/api/persons/:id", (request, response, next) => {
     number: body.number,
   };
 
-  Person.findByIdAndUpdate(request.params.id, person, { new: true })
+  Person.findByIdAndUpdate(request.params.id, person, { new: true, runValidators: true, context: 'query' })
     .then((updatedPerson) => updatedPerson.toJSON())
     .then((updatedAndFormattedPerson) => {
       response.json(updatedAndFormattedPerson);
