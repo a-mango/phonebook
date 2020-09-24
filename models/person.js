@@ -1,7 +1,9 @@
 const mongoose = require("mongoose");
+var uniqueValidator = require("mongoose-unique-validator");
 
 const url = process.env.MONGODB_URI;
 
+// Connect to the database
 mongoose
   .connect(url, { useNewUrlParser: true, useUnifiedTopology: true })
   .then((result) => {
@@ -11,12 +13,13 @@ mongoose
     console.log("Database error:", error.message);
   });
 
-mongoose.set('useFindAndModify', false)
+mongoose.set("useFindAndModify", false);
+mongoose.set("useCreateIndex", true);
 
 const personSchema = new mongoose.Schema({
-  name: String,
-  number: String,
-  date: Date,
+  name: { type: String, required: true, unique: true },
+  number: { type: String, required: true },
+  date: { type: Date, required: true },
 });
 
 personSchema.set("toJSON", {
@@ -26,5 +29,7 @@ personSchema.set("toJSON", {
     delete returnedObject.__v;
   },
 });
+
+personSchema.plugin(uniqueValidator);
 
 module.exports = mongoose.model("Person", personSchema);

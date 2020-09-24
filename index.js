@@ -1,18 +1,24 @@
+// Dotenv package
 require("dotenv").config();
 
+// Express package
 const express = require("express");
+// Logging middleware
 const morgan = require("morgan");
+// Cross-origin resource sharing middleware
 const cors = require("cors");
 
+// Import Mongoose Person model
 const Person = require("./models/person");
 
-// Setup morgan tokens
+// Setup body token for Morgan to log
+// a stringified version of the request
 morgan.token("body", (req) => JSON.stringify(req.body));
 
 // Create a new app object
 const app = express();
 
-// Load middlewares
+// Load the middlewares
 app.use(express.json());
 app.use(cors());
 app.use(express.static("build"));
@@ -22,27 +28,32 @@ app.use(
 
 /**
  * Info route
+ *
+ * Returns basic information about the phonebook
  */
-app.get("/info", (request, response) => {
-  Person.find().count({}, (err, count) => {
-    console.log(count);
-    const html = `
-    <p>Phonebook has information for ${count} people</p>
-    <p>${new Date()}</p>
-  `;
-
-    response.send(html);
-  }).catch((error) => next(error));
+app.get("/info", (request, response, next) => {
+  Person.countDocuments()
+    .then((count) => {
+      return `
+        <p>Phonebook has information for ${count} people</p>
+        <p>${new Date()}</p>
+      `;
+    })
+    .then((html) => {
+      response.send(html);
+    })
+    .catch((error) => next(error));
 });
 
 /**
  * API read route
  * Returns all the persons in JSON format
  */
-app.get("/api/persons", (request, response) => {
+app.get("/api/persons", (request, response, next) => {
   Person.find({})
-    .then((notes) => {
-      response.json(notes);
+    .then((persons) => persons.map((person) => person.toJSON))
+    .then((formattedPersons) => {
+      response.json(formattedPersons);
     })
     .catch((error) => next(error));
 });
@@ -51,10 +62,11 @@ app.get("/api/persons", (request, response) => {
  * API read route
  * Returns the person with the specified id
  */
-app.get("/api/persons/:id", (request, response) => {
+app.get("/api/persons/:id", (request, response, next) => {
   Person.findById(request.params.id)
-    .then((note) => {
-      response.json(note);
+    .then((person) => person.toJSON())
+    .then((formattedPerson) => {
+      response.json(formattedPerson);
     })
     .catch((error) => next(error));
 });
@@ -71,19 +83,16 @@ app.delete("/api/persons/:id", (request, response, next) => {
     .catch((error) => next(error));
 });
 
-app.post("/api/persons", (request, response) => {
+/**
+ * API create route
+ * Creates the person with the specified
+ * name and number
+ *
+ * Will return an error if either name or number
+ * is missing or name already exists
+ */
+app.post("/api/persons", (request, response, next) => {
   const body = request.body;
-
-  // If request body is not valid, return 400 error
-  if (body.name === undefined) {
-    return response.status(400).json({
-      error: "name missing",
-    });
-  } else if (body.number === undefined) {
-    return response.status(400).json({
-      error: "number missing",
-    });
-  }
 
   // Create a new person object
   const person = new Person({
@@ -93,14 +102,22 @@ app.post("/api/persons", (request, response) => {
   });
 
   // Save the person to the database
+  // Use promise chaining for cleaner code
   person
     .save()
-    .then((savedPerson) => {
-      response.json(savedPerson);
+    .then((savedPerson) => savedPerson.toJSON())
+    .then((savedAndFormattedPerson) => {
+      response.json(savedAndFormattedPerson);
     })
     .catch((error) => next(error));
 });
 
+/**
+ * API update route
+ *
+ * Updates the person with the specified id
+ * with the new name and number
+ */
 app.put("/api/persons/:id", (request, response, next) => {
   const body = request.body;
 
@@ -110,49 +127,44 @@ app.put("/api/persons/:id", (request, response, next) => {
   };
 
   Person.findByIdAndUpdate(request.params.id, person, { new: true })
-    .then((updatedNote) => {
-      response.json(updatedNote);
+    .then((updatedPerson) => updatedPerson.toJSON())
+    .then((updatedAndFormattedPerson) => {
+      response.json(updatedAndFormattedPerson);
     })
     .catch((error) => next(error));
 });
 
 /**
  * Catch any request that did not find a valid route
+ * and return an error message with 404 status
  */
 const unknownEndpoint = (request, response) => {
   response.status(404).send({ error: "unknown endpoint" });
 };
 
+// Register unknownEndpoint middleware
 app.use(unknownEndpoint);
 
+/**
+ * Handle errors based on error name
+ * and returns an error message with 400 status
+ */
 const errorHandler = (error, request, response, next) => {
   console.error(error.message);
 
+  // Check for the error type and return it
+  // with a 400 status code
   if (error.name === "CastError") {
     return response.status(400).send({ error: "malformatted id" });
+  } else if (error.name === "ValidationError") {
+    return response.status(400).json({ error: error.message });
   }
 
   next(error);
 };
 
+// Register the error handling middleware
 app.use(errorHandler);
-
-/**
- * Finds if a person with an equal name value
- * already exists in the list
- *
- * @param {string} name The value to check for
- */
-const nameExists = (name) => persons.some((person) => person.name === name);
-
-/**
- * Generate an ID using Math.random,
- * Math.round and the exponential operator
- * Warning: is not collision-free
- */
-const generateId = () => {
-  return Math.round(Math.random() * 10 ** 10);
-};
 
 // Port to listen on
 const PORT = process.env.PORT;
