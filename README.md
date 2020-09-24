@@ -41,3 +41,11 @@ Same as `deploy`, but builds the frontend before deploying.
 ### `logs:prod`
 
 Displays the Heroku logs
+
+### `lint`
+
+Validates code with ESLint
+
+### `lint:fix`
+
+Fixes code with ESLint
